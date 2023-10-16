@@ -1,4 +1,4 @@
-# Wal Theme
+# Fork of Wal Theme with higher contrast theme
 
 This extensions for Visual Studio Code adds a **real time updated theme** that is dynamically generated from the color palette provided by [pywal](https://github.com/dylanaraps/pywal).
 
