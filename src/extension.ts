@@ -5,6 +5,7 @@ import * as os from 'os';
 import * as chokidar from 'chokidar';
 import * as Color from 'color';
 import template from './template';
+import templateExtended from './templateExtended';
 
 const walCachePath = path.join(os.homedir(), '.cache', 'wal');
 const walColorsPath = path.join(walCachePath, 'colors');
@@ -63,6 +64,10 @@ export function deactivate() {
  */
 function generateColorThemes() {
 	// Import colors from pywal cache
+	
+	type pywalDict = {[key: string]: { [key: string]: Color }} 
+	let pywalDicts: pywalDict = {special:{},colors:{}}
+
 	let colors: Color[] | undefined;
 	try {
 		colors = fs.readFileSync(walColorsPath)
@@ -73,10 +78,13 @@ function generateColorThemes() {
 		if (fs.existsSync(walColorsJsonPath)) {
 			type WalJson = {
 				special: {
-					background: string,
-					foreground: string
+					[key: string]: string
+				},
+				colors:{
+					[key: string]: string
 				}
 			};
+
 
 			let colorsJson: WalJson;
 			const colorsRaw = fs.readFileSync(walColorsJsonPath).toString();
@@ -94,6 +102,12 @@ function generateColorThemes() {
 
 			colors[0] = Color(colorsJson?.special?.background);
 			colors[7] = Color(colorsJson?.special?.foreground);
+
+			for (const [pkey, ] of Object.entries(pywalDicts)) {
+				for (const [key, value] of Object.entries(colorsJson[pkey as keyof typeof colorsJson])) {
+					pywalDicts[pkey][key] = Color(value);
+				}
+			}
 		}
 	} catch(error) {
 		// Not a complete failure if we have colors from the wal colors file, but failed to load from the colors.json
@@ -112,6 +126,11 @@ function generateColorThemes() {
 	// Generate the bordered theme
 	const colorThemeBordered = template(colors, true);
 	fs.writeFileSync(path.join(__dirname,'..', 'themes', 'wal-bordered.json'), JSON.stringify(colorThemeBordered, null, 4));
+
+	// Generate the extended theme
+	const colorThemeExtended = templateExtended(pywalDicts);
+	fs.writeFileSync(path.join(__dirname,'..', 'themes', 'wal-extended.json'), JSON.stringify(colorThemeExtended, null, 4));
+
 }
 
 /**
